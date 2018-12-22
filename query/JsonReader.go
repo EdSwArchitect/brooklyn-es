@@ -88,3 +88,16 @@ func ReadJSONObject(name string) (esp ESInfo, err error) {
 
 	return esp, nil
 }
+
+// ParseElasticJSONObject parse the json string and return the object or error
+func ParseElasticJSONObject(contents string) (esp ESInfo, err error) {
+
+	dec := json.NewDecoder(strings.NewReader(contents))
+
+	if err := dec.Decode(&esp); err != nil {
+		log.Fatal(err)
+		return esp, err
+	}
+
+	return esp, nil
+}

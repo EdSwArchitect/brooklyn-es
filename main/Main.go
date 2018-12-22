@@ -1,11 +1,50 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
+	"log"
+	"net/http"
 	"os"
 
 	"github.com/EdSwArchitect/brooklyn-es/query"
+	"github.com/gorilla/mux"
 )
+
+// GetRootPath Handle the root path
+func GetRootPath(w http.ResponseWriter, r *http.Request) {
+	contents := `{ "response" : "Hi, Ed!"}`
+	json.NewEncoder(w).Encode(contents)
+}
+
+// GetEvents Get the event
+func GetEvents(w http.ResponseWriter, r *http.Request) {
+
+	// a map of values
+	params := mux.Vars(r)
+
+	fmt.Printf("Params: %v\n", params)
+
+	fmt.Printf("val is: '%s'\n", params["val"])
+
+	queryResults := query.GetBodyQueryByEventsResty("darkstar", 9200, "mybrooklyn", params["val"], 0, 50)
+
+	objectResults, _ := query.ParseElasticJSONObject(queryResults)
+
+	json.NewEncoder(w).Encode(objectResults.Hits.Hits)
+
+}
+
+// Server does what
+func Server() {
+	router := mux.NewRouter()
+
+	router.HandleFunc("/", GetRootPath).Methods("GET")
+	router.HandleFunc("/getEvents/{val}", GetEvents).Methods("GET")
+
+	log.Fatal(http.ListenAndServe(":8080", router))
+
+}
 
 func main() {
 	args := os.Args
@@ -16,25 +55,7 @@ func main() {
 
 	fmt.Printf("The one arg is: '%s'\n", uri)
 
-	// if esp, err := query.ReadJSONObject("/home/edbrown/Documents/brooklyn_results.json"); err == nil {
-
-	// 	fmt.Printf("Took - %d: TimedOut - %t \n", esp.Took, esp.TimedOut)
-	// 	fmt.Printf("Shards.total: %d Shards.successful: %d Shards.skipped: %d Shards.failed :%d\n",
-	// 		esp.Shards.Total, esp.Shards.Successful, esp.Shards.Skipped, esp.Shards.Failed)
-
-	// 	fmt.Printf("Shards.hits.total: %d Shards.hits.maxScore: %f\n", esp.Hits.Total, esp.Hits.MaxScore)
-	// 	fmt.Printf("hits.total: %d\n", esp.Hits.Total)
-	// 	fmt.Printf("hits.total length: %d\n", len(esp.Hits.Hits))
-
-	// 	for _, dahit := range esp.Hits.Hits {
-	// 		fmt.Printf("\t*** time: %s location: %s lat/lon: %f/%f weather:%s \n", dahit.Source.Timestamp,
-	// 			dahit.Source.Location, dahit.Source.Lat,
-	// 			dahit.Source.Lon, dahit.Source.WeatherSummary)
-	// 	}
-	// } else {
-	// 	fmt.Println("Parse failed")
-	// }
-
+	// get the information about the cluster
 	status, _ := query.GetElasticServerInfo(uri)
 
 	fmt.Printf("Name: %s\nVersion: %s\nLucene Version: %s\nCluster name: %s\nTagline: %s\n", status.Name, status.Version.Number,
@@ -48,10 +69,19 @@ func main() {
 
 	// fmt.Printf("Query results\n%s\n", queryResuts)
 
-	queryResuts := query.GetBodyQueryByEventsResty("darkstar", 9200, "mybrooklyn", "Father's", 0, 50)
+	queryResults := query.GetBodyQueryByEventsResty("darkstar", 9200, "mybrooklyn", "Father's", 0, 50)
 
-	fmt.Printf("\n\nFLAG FLAG FLAG\n\nQuery results\n%s\n", queryResuts)
+	fmt.Printf("\n\nFLAG FLAG FLAG\n\nQuery results\n%s\n==========\n\n", queryResults)
 
-	//Independence Day
+	objectResults, _ := query.ParseElasticJSONObject(queryResults)
+
+	fmt.Printf("The length is: %v\n", len(objectResults.Hits.Hits))
+
+	for _, daHit := range objectResults.Hits.Hits {
+		fmt.Printf("%v", daHit)
+		fmt.Println("----")
+	}
+
+	Server()
 
 }
