@@ -152,3 +152,34 @@ func GetBodyQueryByEventsResty(host string, port int, index string, event string
 
 	return resp2.String()
 }
+
+// GetByWeather get the results of an ElasticSearch query
+func GetByWeather(host string, port int, index string, weather string, start int, size int) string {
+
+	body := `{
+		"query" : {
+			"match" :  { 
+				"weather_summary" : "` + weather + `" 
+			}
+		},
+		"from" : ` + strconv.Itoa(start) + `,
+		"size" : ` + strconv.Itoa(size) + `
+
+	}
+	`
+
+	fmt.Printf("The body\n%s\n", body)
+
+	resp2, err := resty.R().
+		SetHeader("Content-Type", "application/json").
+		SetBody(body).
+		SetQueryParams(map[string]string{
+			"pretty": "true"}).
+		Post("http://" + host + ":" + strconv.Itoa(port) + "/" + index + "/_search")
+
+	if err != nil {
+		fmt.Printf("Some error: %v\n", err)
+	}
+
+	return resp2.String()
+}
