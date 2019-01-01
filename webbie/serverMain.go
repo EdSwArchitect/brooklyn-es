@@ -30,7 +30,17 @@ func GetEvents(w http.ResponseWriter, r *http.Request) {
 
 	objectResults, _ := query.ParseElasticJSONObject(queryResults)
 
-	json.NewEncoder(w).Encode(objectResults.Hits.Hits)
+	fmt.Println("Hits.Hits: ", objectResults.Hits.Hits)
+
+	sources := make([]query.Source, len(objectResults.Hits.Hits))
+
+	for i, src := range objectResults.Hits.Hits {
+		sources[i] = src.Source
+	}
+
+	// allHits := objectResults.Hits.Hits
+
+	json.NewEncoder(w).Encode(sources)
 
 }
 
@@ -48,7 +58,15 @@ func GetWeather(w http.ResponseWriter, r *http.Request) {
 
 	objectResults, _ := query.ParseElasticJSONObject(queryResults)
 
-	json.NewEncoder(w).Encode(objectResults.Hits.Hits)
+	sources := make([]query.Source, len(objectResults.Hits.Hits))
+
+	for i, src := range objectResults.Hits.Hits {
+		sources[i] = src.Source
+	}
+
+	// allHits := objectResults.Hits.Hits
+
+	json.NewEncoder(w).Encode(sources)
 
 }
 
